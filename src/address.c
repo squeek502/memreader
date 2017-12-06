@@ -45,19 +45,19 @@ static int memaddress_tostring(lua_State *L)
 
 static int memaddress_add(lua_State *L)
 {
-	memaddress_t* addr = check_memaddress(L, 1);
-	LONG_PTR offset = memaddress_checkptr(L, 2);
+	LONG_PTR a = memaddress_checkptr(L, 1);
+	LONG_PTR b = memaddress_checkptr(L, 2);
 	memaddress_t* result = push_memaddress(L);
-	result->ptr = (LPVOID)((char*)addr->ptr + offset);
+	result->ptr = (LPVOID)(a + b);
 	return 1;
 }
 
 static int memaddress_sub(lua_State *L)
 {
-	memaddress_t* addr = check_memaddress(L, 1);
-	LONG_PTR offset = memaddress_checkptr(L, 2);
+	LONG_PTR a = memaddress_checkptr(L, 1);
+	LONG_PTR b = memaddress_checkptr(L, 2);
 	memaddress_t* result = push_memaddress(L);
-	result->ptr = (LPVOID)((char*)addr->ptr - offset);
+	result->ptr = (LPVOID)(a - b);
 	return 1;
 }
 
