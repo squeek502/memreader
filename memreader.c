@@ -69,10 +69,20 @@ static int get_int(lua_State *L, void *v)
 	lua_pushnumber(L, *(int*)v);
 	return 1;
 }
-
 static int set_int(lua_State *L, void *v)
 {
 	*(int*)v = luaL_checkint(L, 3);
+	return 0;
+}
+
+static int get_string(lua_State *L, void *v)
+{
+	lua_pushstring(L, (const char*)v);
+	return 1;
+}
+static int set_string(lua_State *L, void *v)
+{
+	(const char*)v = luaL_checkstring(L, 3);
 	return 0;
 }
 
@@ -158,6 +168,14 @@ static memaddress_t* push_memaddress(lua_State *L)
 	return addr;
 }
 
+// for field access
+static int get_memaddress(lua_State *L, void *v)
+{
+	memaddress_t *memaddress = push_memaddress(L);
+	memaddress->ptr = *(LPVOID*)v;
+	return 1;
+}
+
 static int memaddress_tostring(lua_State *L)
 {
 	memaddress_t* addr = check_memaddress(L, 1);
@@ -182,7 +200,10 @@ static int register_memaddress(lua_State *L) {
 #define MT_PROCESS MT_PREFIX(process)
 typedef struct {
 	HANDLE handle;
+	HANDLE mainModule;
 	DWORD pid;
+	LPVOID baseAddress;
+	TCHAR name[MAX_PATH];
 } process_t;
 
 static process_t* check_process(lua_State *L, int index)
@@ -197,6 +218,20 @@ static process_t* push_process(lua_State *L)
 	luaL_getmetatable(L, MT_PROCESS);
 	lua_setmetatable(L, -2);
 	return proc;
+}
+
+static void init_process(process_t* process)
+{
+	HMODULE module;
+	DWORD cb;
+	EnumProcessModules(process->handle, &module, sizeof(module), &cb);
+	process->mainModule = module;
+
+	GetProcessName(process->pid, process->name, sizeof(process->name) / sizeof(TCHAR));
+
+	MODULEINFO info;
+	GetModuleInformation(process->handle, module, &info, sizeof(info));
+	process->baseAddress = info.lpBaseOfDll;
 }
 
 static int lua_GetProcessName(lua_State *L); // forward decl
@@ -228,6 +263,68 @@ static int process_base_address(lua_State *L)
 	return push_last_error(L);
 }
 
+#pragma comment(lib, "Version.Lib")
+
+static int process_version(lua_State *L)
+{
+	process_t* process = check_process(L, 1);
+
+	CHAR gameExe[MAX_PATH];
+	GetModuleFileNameEx(process->handle, process->mainModule, gameExe, MAX_PATH);
+
+	DWORD len = GetFileVersionInfoSize(gameExe, NULL);
+	if (len == 0)
+		return push_last_error(L);
+
+	BYTE* pVersionResource = malloc(len);
+	if (!GetFileVersionInfo(gameExe, 0, len, pVersionResource))
+	{
+		free(pVersionResource);
+		return push_last_error(L);
+	}
+
+	UINT uLen;
+	VS_FIXEDFILEINFO* ptFixedFileInfo;
+	if (!VerQueryValue(pVersionResource, "\\", (LPVOID*)&ptFixedFileInfo, &uLen))
+	{
+		free(pVersionResource);
+		return push_error(L, "unable to get version");
+	}
+
+	if (uLen == 0)
+	{
+		free(pVersionResource);
+		return push_error(L, "unable to get version");
+	}
+
+	lua_createtable(L, 0, 2);
+	lua_createtable(L, 0, 4);
+	lua_pushinteger(L, HIWORD(ptFixedFileInfo->dwFileVersionMS));
+	lua_setfield(L, -2, "major");
+	lua_pushinteger(L, LOWORD(ptFixedFileInfo->dwFileVersionMS));
+	lua_setfield(L, -2, "minor");
+	lua_pushinteger(L, HIWORD(ptFixedFileInfo->dwFileVersionLS));
+	lua_setfield(L, -2, "build");
+	lua_pushinteger(L, LOWORD(ptFixedFileInfo->dwFileVersionLS));
+	lua_setfield(L, -2, "revision");
+	lua_setfield(L, -2, "file");
+
+	lua_createtable(L, 0, 4);
+	lua_pushinteger(L, HIWORD(ptFixedFileInfo->dwProductVersionMS));
+	lua_setfield(L, -2, "major");
+	lua_pushinteger(L, LOWORD(ptFixedFileInfo->dwProductVersionMS));
+	lua_setfield(L, -2, "minor");
+	lua_pushinteger(L, HIWORD(ptFixedFileInfo->dwProductVersionLS));
+	lua_setfield(L, -2, "build");
+	lua_pushinteger(L, LOWORD(ptFixedFileInfo->dwProductVersionLS));
+	lua_setfield(L, -2, "revision");
+	lua_setfield(L, -2, "product");
+
+	free(pVersionResource);
+
+	return 1;
+}
+
 static int process_gc(lua_State *L)
 {
 	process_t* process = check_process(L, 1);
@@ -242,10 +339,13 @@ static const luaL_reg process_meta[] = {
 static const luaL_reg process_methods[] = {
 	{ "get_name", process_get_name },
 	{ "base_address", process_base_address },
+	{ "version", process_version },
 	{ NULL, NULL }
 };
 static const udata_field_info process_getters[] = {
 	{ "pid", get_int, offsetof(process_t, pid) },
+	{ "name", get_string, offsetof(process_t, name) },
+	{ "baseAddress", get_memaddress, offsetof(process_t, baseAddress) },
 	{ NULL, NULL }
 };
 static const udata_field_info process_setters[] = {
@@ -358,7 +458,35 @@ static int lua_OpenProcess(lua_State *L)
 	process_t *process = push_process(L);
 	process->handle = processHandle;
 	process->pid = processId;
+	init_process(process);
 
+	return 1;
+}
+
+static int lua_ReadMemory(lua_State *L)
+{
+	process_t* process = check_process(L, 1);
+	LPVOID address = process->baseAddress;
+	int t = lua_type(L, 2);
+	if (t == LUA_TNUMBER)
+		address = (LPVOID)((char*)address + lua_tointeger(L, 2));
+	else if (t == LUA_TUSERDATA)
+	{
+		// TODO: Does this work?
+		memaddress_t* addr = check_memaddress(L, 2);
+		address = (LPVOID)((char*)address + (LONG_PTR)(addr->ptr));
+	}
+	else
+		luaL_typerror(L, 2, "number or " MT_MEMORY_ADDRESS);
+
+	SIZE_T bytes = luaL_checkint(L, 3);
+	char *buff = malloc(bytes);
+	SIZE_T numBytesRead;
+
+	if (!ReadProcessMemory(process->handle, address, buff, bytes, &numBytesRead))
+		return push_last_error(L);
+
+	lua_pushlstring(L, buff, numBytesRead);
 	return 1;
 }
 
@@ -367,6 +495,7 @@ static const luaL_Reg memreader_funcs[] = {
 	{"debug_privilege", lua_SetDebugPrivilege},
 	{"process_name", lua_GetProcessName},
 	{"process_ids", lua_GetProcesses},
+	{"read_memory", lua_ReadMemory},
 	{NULL,NULL}
 };
 
