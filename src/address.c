@@ -1,6 +1,5 @@
 #include "address.h"
 
-
 memaddress_t* check_memaddress(lua_State *L, int index)
 {
 	memaddress_t* addr = (memaddress_t*)luaL_checkudata(L, index, MEMORY_ADDRESS_T);
@@ -23,6 +22,20 @@ int udata_field_get_memaddress(lua_State *L, void *v)
 	return 1;
 }
 
+LONG_PTR memaddress_checkptr(lua_State *L, int index)
+{
+	int t = lua_type(L, index);
+	if (t == LUA_TNUMBER)
+		return lua_tointeger(L, index);
+	else if (t == LUA_TUSERDATA)
+	{
+		memaddress_t* addr = check_memaddress(L, index);
+		return (LONG_PTR)(addr->ptr);
+	}
+	luaL_typerror(L, index, "number or " MEMORY_ADDRESS_T);
+	return 0;
+}
+
 static int memaddress_tostring(lua_State *L)
 {
 	memaddress_t* addr = check_memaddress(L, 1);
@@ -30,8 +43,28 @@ static int memaddress_tostring(lua_State *L)
 	return 1;
 }
 
+static int memaddress_add(lua_State *L)
+{
+	memaddress_t* addr = check_memaddress(L, 1);
+	LONG_PTR offset = memaddress_checkptr(L, 2);
+	memaddress_t* result = push_memaddress(L);
+	result->ptr = (LPVOID)((char*)addr->ptr + offset);
+	return 1;
+}
+
+static int memaddress_sub(lua_State *L)
+{
+	memaddress_t* addr = check_memaddress(L, 1);
+	LONG_PTR offset = memaddress_checkptr(L, 2);
+	memaddress_t* result = push_memaddress(L);
+	result->ptr = (LPVOID)((char*)addr->ptr - offset);
+	return 1;
+}
+
 static const luaL_reg memaddress_meta[] = {
 	{ "__tostring", memaddress_tostring },
+	{ "__add", memaddress_add },
+	{ "__sub", memaddress_sub },
 	{ NULL, NULL }
 };
 

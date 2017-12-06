@@ -13,6 +13,8 @@ memaddress_t* check_memaddress(lua_State *L, int index);
 memaddress_t* push_memaddress(lua_State *L);
 int udata_field_get_memaddress(lua_State *L, void *v);
 
+LONG_PTR memaddress_checkptr(lua_State *L, int index);
+
 int register_memaddress(lua_State *L);
 
 #endif

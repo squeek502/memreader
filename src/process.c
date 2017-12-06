@@ -35,17 +35,8 @@ static int process_read(lua_State *L)
 {
 	process_t* process = check_process(L, 1);
 	LPVOID address = process->module;
-	int t = lua_type(L, 2);
-	if (t == LUA_TNUMBER)
-		address = (LPVOID)((char*)address + lua_tointeger(L, 2));
-	else if (t == LUA_TUSERDATA)
-	{
-		// TODO: Does this work?
-		memaddress_t* addr = check_memaddress(L, 2);
-		address = (LPVOID)((char*)address + (LONG_PTR)(addr->ptr));
-	}
-	else
-		luaL_typerror(L, 2, "number or " MEMORY_ADDRESS_T);
+	LONG_PTR offset = memaddress_checkptr(L, 2);
+	address = (LPVOID)((char*)address + offset);
 
 	SIZE_T bytes = luaL_checkint(L, 3);
 	char *buff = malloc(bytes);
