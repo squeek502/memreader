@@ -25,6 +25,6 @@
 
 #include "utils.h"
 
-int lua_GetProcessName(lua_State *L);
+int memreader_process_name(lua_State *L);
 
 #endif

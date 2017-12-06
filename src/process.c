@@ -18,62 +18,57 @@ process_t* push_process(lua_State *L)
 	return proc;
 }
 
-void init_process(process_t* process)
+void init_process(process_t* process, DWORD pid, HANDLE handle)
 {
-	HMODULE module;
+	process->pid = pid;
+	process->handle = handle;
+
 	DWORD cb;
-	EnumProcessModules(process->handle, &module, sizeof(module), &cb);
-	process->mainModule = module;
+	EnumProcessModules(process->handle, &process->module, sizeof(HMODULE), &cb);
 
-	GetProcessName(process->pid, process->name, sizeof(process->name) / sizeof(TCHAR));
-
-	MODULEINFO info;
-	GetModuleInformation(process->handle, module, &info, sizeof(info));
-	process->baseAddress = info.lpBaseOfDll;
+	GetModuleBaseName(process->handle, NULL, process->name, sizeof(process->name) / sizeof(TCHAR));
+	GetModuleFileNameEx(process->handle, NULL, process->path, sizeof(process->path) / sizeof(TCHAR));
 }
 
-static int process_get_name(lua_State *L)
+static int process_read(lua_State *L)
 {
 	process_t* process = check_process(L, 1);
-	lua_settop(L, 0);
-	lua_pushinteger(L, process->pid);
-	return lua_GetProcessName(L);
-}
-
-static int process_base_address(lua_State *L)
-{
-	process_t* process = check_process(L, 1);
-
-	HMODULE module;
-	DWORD cb;
-	MODULEINFO info;
-
-	if (EnumProcessModules(process->handle, &module, sizeof(module), &cb)
-		&& GetModuleInformation(process->handle, module, &info, sizeof(info)))
+	LPVOID address = process->module;
+	int t = lua_type(L, 2);
+	if (t == LUA_TNUMBER)
+		address = (LPVOID)((char*)address + lua_tointeger(L, 2));
+	else if (t == LUA_TUSERDATA)
 	{
-		LPVOID baseAddress = info.lpBaseOfDll;
-		memaddress_t* addr = push_memaddress(L);
-		addr->ptr = baseAddress;
-		return 1;
+		// TODO: Does this work?
+		memaddress_t* addr = check_memaddress(L, 2);
+		address = (LPVOID)((char*)address + (LONG_PTR)(addr->ptr));
 	}
+	else
+		luaL_typerror(L, 2, "number or " MEMORY_ADDRESS_T);
 
-	return push_last_error(L);
+	SIZE_T bytes = luaL_checkint(L, 3);
+	char *buff = malloc(bytes);
+	SIZE_T numBytesRead;
+
+	if (!ReadProcessMemory(process->handle, address, buff, bytes, &numBytesRead))
+		return push_last_error(L);
+
+	lua_pushlstring(L, buff, numBytesRead);
+	return 1;
 }
-
 
 static int process_version(lua_State *L)
 {
 	process_t* process = check_process(L, 1);
 
-	CHAR gameExe[MAX_PATH];
-	GetModuleFileNameEx(process->handle, process->mainModule, gameExe, MAX_PATH);
+	const char* exe = process->path;
 
-	DWORD len = GetFileVersionInfoSize(gameExe, NULL);
+	DWORD len = GetFileVersionInfoSize(exe, NULL);
 	if (len == 0)
 		return push_last_error(L);
 
 	BYTE* pVersionResource = malloc(len);
-	if (!GetFileVersionInfo(gameExe, 0, len, pVersionResource))
+	if (!GetFileVersionInfo(exe, 0, len, pVersionResource))
 	{
 		free(pVersionResource);
 		return push_last_error(L);
@@ -133,15 +128,15 @@ static const luaL_reg process_meta[] = {
 	{ NULL, NULL }
 };
 static const luaL_reg process_methods[] = {
-	{ "get_name", process_get_name },
-	{ "base_address", process_base_address },
 	{ "version", process_version },
+	{ "read", process_read },
 	{ NULL, NULL }
 };
 static udata_field_info process_getters[] = {
 	{ "pid", udata_field_get_int, offsetof(process_t, pid) },
 	{ "name", udata_field_get_string, offsetof(process_t, name) },
-	{ "baseAddress", udata_field_get_memaddress, offsetof(process_t, baseAddress) },
+	{ "path", udata_field_get_string, offsetof(process_t, path) },
+	{ "base", udata_field_get_memaddress, offsetof(process_t, module) },
 	{ NULL, NULL }
 };
 static udata_field_info process_setters[] = {

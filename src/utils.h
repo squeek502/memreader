@@ -3,7 +3,7 @@
 
 #include "memreader.h"
 
-#define MT_PREFIX(t) "memreader." #t
+#define MEMREADER_METATABLE(t) "memreader." #t
 
 int push_error(lua_State *L, const char* msg);
 int push_last_error(lua_State *L);

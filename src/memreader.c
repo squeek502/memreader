@@ -5,21 +5,7 @@
 
 #include <psapi.h>
 
-/************************************************/
-// Utils
-
-/************************************************/
-// Structs
-
-// Memory Address
-
-
-// Process
-
-/************************************************/
-// Module Methods
-
-int lua_GetProcessName(lua_State *L)
+int memreader_process_name(lua_State *L)
 {
 	DWORD processId = luaL_checkint(L, 1);
 	TCHAR processName[MAX_PATH];
@@ -29,7 +15,7 @@ int lua_GetProcessName(lua_State *L)
 	return 1;
 }
 
-static int lua_SetDebugPrivilege(lua_State *L)
+static int memreader_debug_privilege(lua_State *L)
 {
 	BOOL state = lua_toboolean(L, 1);
 	HANDLE hToken = NULL;
@@ -52,7 +38,7 @@ static int lua_SetDebugPrivilege(lua_State *L)
 	return 1;
 }
 
-static int lua_GetProcesses(lua_State *L)
+static int memreader_process_ids(lua_State *L)
 {
 	DWORD processes[MAX_PROCESSES]; DWORD bytesFilled;
 
@@ -74,7 +60,7 @@ static int lua_GetProcesses(lua_State *L)
 	return 1;
 }
 
-static int lua_OpenProcess(lua_State *L)
+static int memreader_open_process(lua_State *L)
 {
 	DWORD processId = luaL_checkint(L, 1);
 
@@ -87,47 +73,17 @@ static int lua_OpenProcess(lua_State *L)
 		return push_last_error(L);
 
 	process_t *process = push_process(L);
-	process->handle = processHandle;
-	process->pid = processId;
-	init_process(process);
+	init_process(process, processId, processHandle);
 
-	return 1;
-}
-
-static int lua_ReadMemory(lua_State *L)
-{
-	process_t* process = check_process(L, 1);
-	LPVOID address = process->baseAddress;
-	int t = lua_type(L, 2);
-	if (t == LUA_TNUMBER)
-		address = (LPVOID)((char*)address + lua_tointeger(L, 2));
-	else if (t == LUA_TUSERDATA)
-	{
-		// TODO: Does this work?
-		memaddress_t* addr = check_memaddress(L, 2);
-		address = (LPVOID)((char*)address + (LONG_PTR)(addr->ptr));
-	}
-	else
-		luaL_typerror(L, 2, "number or " MEMORY_ADDRESS_T);
-
-	SIZE_T bytes = luaL_checkint(L, 3);
-	char *buff = malloc(bytes);
-	SIZE_T numBytesRead;
-
-	if (!ReadProcessMemory(process->handle, address, buff, bytes, &numBytesRead))
-		return push_last_error(L);
-
-	lua_pushlstring(L, buff, numBytesRead);
 	return 1;
 }
 
 static const luaL_Reg memreader_funcs[] = {
-	{"open_process", lua_OpenProcess},
-	{"debug_privilege", lua_SetDebugPrivilege},
-	{"process_name", lua_GetProcessName},
-	{"process_ids", lua_GetProcesses},
-	{"read_memory", lua_ReadMemory},
-	{NULL,NULL}
+	{ "open_process", memreader_open_process },
+	{ "debug_privilege", memreader_debug_privilege },
+	{ "process_name", memreader_process_name },
+	{ "process_ids", memreader_process_ids },
+	{ NULL, NULL }
 };
 
 LUALIB_API int luaopen_memreader(lua_State *L)
