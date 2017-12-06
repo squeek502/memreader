@@ -2,6 +2,7 @@
 #include "process.h"
 #include "address.h"
 #include "wutils.h"
+#include "module.h"
 
 #include <psapi.h>
 
@@ -92,6 +93,7 @@ LUALIB_API int luaopen_memreader(lua_State *L)
 
 	register_process(L);
 	register_memaddress(L);
+	register_module(L);
 
 	return 1;
 }

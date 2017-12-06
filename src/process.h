@@ -2,7 +2,6 @@
 #define MEMREADER_PROCESS_H
 
 #include "memreader.h"
-#include "module.h"
 
 #define PROCESS_T MEMREADER_METATABLE(process)
 

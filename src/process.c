@@ -1,6 +1,7 @@
 #include "process.h"
 #include "address.h"
 #include "wutils.h"
+#include "module.h"
 
 #include <psapi.h>
 
@@ -116,6 +117,27 @@ static int process_version(lua_State *L)
 	return 1;
 }
 
+static int process_modules(lua_State *L)
+{
+	process_t* process = check_process(L, 1);
+	HMODULE modules[MAX_MODULES];
+	DWORD bytesRequired;
+
+	if (!EnumProcessModulesEx(process->handle, modules, sizeof(modules), &bytesRequired, LIST_MODULES_ALL))
+		return push_last_error(L);
+
+	UINT numModules = bytesRequired / sizeof(HMODULE);
+
+	lua_createtable(L, numModules, 0);
+	for (UINT i = 0; i < numModules; i++)
+	{
+		module_t* module = push_module(L);
+		init_module(module, modules[i], process->handle);
+		lua_rawseti(L, -2, i+1);
+	}
+	return 1;
+}
+
 static int process_gc(lua_State *L)
 {
 	process_t* process = check_process(L, 1);
@@ -130,6 +152,7 @@ static const luaL_reg process_meta[] = {
 static const luaL_reg process_methods[] = {
 	{ "version", process_version },
 	{ "read", process_read },
+	{ "modules", process_modules },
 	{ NULL, NULL }
 };
 static udata_field_info process_getters[] = {
