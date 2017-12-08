@@ -141,6 +141,20 @@ static int process_modules(lua_State *L)
 	return 1;
 }
 
+static int process_exit_code(lua_State *L)
+{
+	process_t* process = check_process(L, 1);
+	DWORD exitCode;
+	if (!GetExitCodeProcess(process->handle, &exitCode))
+		return push_last_error(L);
+
+	if (exitCode == STILL_ACTIVE)
+		return 0;
+
+	lua_pushinteger(L, exitCode);
+	return 1;
+}
+
 static int process_gc(lua_State *L)
 {
 	process_t* process = check_process(L, 1);
@@ -157,6 +171,7 @@ static const luaL_reg process_methods[] = {
 	{ "read", process_read },
 	{ "read_relative", process_read_relative },
 	{ "modules", process_modules },
+	{ "exit_code", process_exit_code },
 	{ NULL, NULL }
 };
 static udata_field_info process_getters[] = {
