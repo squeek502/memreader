@@ -12,7 +12,7 @@ typedef struct {
 	TCHAR title[MAX_PATH];
 } window_t;
 
-void init_window(window_t * window, HWND handle, const LPTSTR title);
+void init_window(window_t * window, HWND handle, const TCHAR* title);
 int register_window(lua_State *L);
 window_t* push_window(lua_State *L);
 
