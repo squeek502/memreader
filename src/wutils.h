@@ -3,6 +3,4 @@
 
 #include "memreader.h"
 
-BOOL GetProcessName(DWORD processId, TCHAR* processName, DWORD len);
-
 #endif

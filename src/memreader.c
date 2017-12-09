@@ -1,21 +1,11 @@
 #include "memreader.h"
 #include "process.h"
 #include "address.h"
-#include "wutils.h"
 #include "module.h"
 #include "window.h"
 
 #include <psapi.h>
-
-int memreader_process_name(lua_State *L)
-{
-	DWORD processId = luaL_checkint(L, 1);
-	TCHAR processName[MAX_PATH];
-	if (!GetProcessName(processId, processName, MAX_PATH))
-		return push_last_error(L);
-	lua_pushstring(L, processName);
-	return 1;
-}
+#include <TlHelp32.h>
 
 static int memreader_debug_privilege(lua_State *L)
 {
@@ -40,25 +30,56 @@ static int memreader_debug_privilege(lua_State *L)
 	return 1;
 }
 
-static int memreader_process_ids(lua_State *L)
+static int memreader_process_iterator(lua_State *L)
 {
-	DWORD processes[MAX_PROCESSES]; DWORD bytesFilled;
+	HANDLE handle = *(HANDLE*)lua_touserdata(L, lua_upvalueindex(1));
+	static PROCESSENTRY32 pe32;
+	pe32.dwSize = sizeof(PROCESSENTRY32);
 
-	if (EnumProcesses(processes, sizeof(processes), &bytesFilled) == 0)
+	BOOL success;
+	if (lua_isnil(L, 2)) // control variable is nil on first iteration
+		success = Process32First(handle, &pe32);
+	else
+		success = Process32Next(handle, &pe32);
+
+	if (!success)
+		return 0;
+
+	lua_pushinteger(L, pe32.th32ProcessID);
+	lua_pushstring(L, pe32.szExeFile);
+	return 2;
+}
+
+#define SNAPSHOT_T MEMREADER_METATABLE(snapshot)
+static int memreader_snapshot_gc(lua_State *L)
+{
+	HANDLE handle = *(HANDLE*)lua_touserdata(L, 1);
+	if (handle) CloseHandle(handle);
+	return 0;
+}
+
+static int register_snapshot(lua_State *L)
+{
+	luaL_newmetatable(L, SNAPSHOT_T);
+	lua_pushstring(L, "__gc");
+	lua_pushcfunction(L, memreader_snapshot_gc);
+	lua_settable(L, -3);
+	lua_pop(L, 1);
+	return 0;
+}
+
+static int memreader_processes(lua_State *L)
+{
+	HANDLE* handlePtr = (HANDLE*)lua_newuserdata(L, sizeof(HANDLE*));
+	luaL_getmetatable(L, SNAPSHOT_T);
+	lua_setmetatable(L, -2);
+
+	*handlePtr = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
+	if (*handlePtr == INVALID_HANDLE_VALUE)
 		return push_last_error(L);
 
-	unsigned int numProcesses = bytesFilled / sizeof(DWORD);
-
-	lua_createtable(L, numProcesses-1, 0);
-	int k = 1;
-	for (unsigned int i = 0; i < numProcesses; i++)
-	{
-		if (processes[i] != 0)
-		{
-			lua_pushinteger(L, processes[i]);
-			lua_rawseti(L, -2, k++);
-		}
-	}
+	// memreader_process_iterator's upvalue is the HANDLE* userdata
+	lua_pushcclosure(L, memreader_process_iterator, 1);
 	return 1;
 }
 
@@ -95,8 +116,7 @@ static int memreader_find_window(lua_State *L)
 static const luaL_Reg memreader_funcs[] = {
 	{ "openprocess", memreader_open_process },
 	{ "debugprivilege", memreader_debug_privilege },
-	{ "processname", memreader_process_name },
-	{ "processids", memreader_process_ids },
+	{ "processes", memreader_processes },
 	{ "findwindow", memreader_find_window },
 	{ NULL, NULL }
 };
@@ -109,6 +129,7 @@ LUALIB_API int luaopen_memreader(lua_State *L)
 	register_memaddress(L);
 	register_module(L);
 	register_window(L);
+	register_snapshot(L);
 
 	return 1;
 }

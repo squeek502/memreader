@@ -1,6 +1,5 @@
 #include "process.h"
 #include "address.h"
-#include "wutils.h"
 #include "module.h"
 
 #include <psapi.h>
