@@ -3,6 +3,7 @@
 #include "address.h"
 #include "wutils.h"
 #include "module.h"
+#include "window.h"
 
 #include <psapi.h>
 
@@ -79,11 +80,24 @@ static int memreader_open_process(lua_State *L)
 	return 1;
 }
 
+static int memreader_find_window(lua_State *L)
+{
+	const char* windowName = luaL_checkstring(L, 1);
+	HWND windowHandle = FindWindow(NULL, windowName);
+	if (!windowHandle)
+		return push_last_error(L);
+
+	window_t* window = push_window(L);
+	init_window(window, windowHandle, windowName);
+	return 1;
+}
+
 static const luaL_Reg memreader_funcs[] = {
 	{ "open_process", memreader_open_process },
 	{ "debug_privilege", memreader_debug_privilege },
 	{ "process_name", memreader_process_name },
 	{ "process_ids", memreader_process_ids },
+	{ "find_window", memreader_find_window },
 	{ NULL, NULL }
 };
 
@@ -94,6 +108,7 @@ LUALIB_API int luaopen_memreader(lua_State *L)
 	register_process(L);
 	register_memaddress(L);
 	register_module(L);
+	register_window(L);
 
 	return 1;
 }
