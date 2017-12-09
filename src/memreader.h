@@ -26,6 +26,6 @@
 
 #include "utils.h"
 
-int memreader_process_name(lua_State *L);
+#define SNAPSHOT_T MEMREADER_METATABLE(snapshot)
 
 #endif

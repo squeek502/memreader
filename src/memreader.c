@@ -50,7 +50,6 @@ static int memreader_process_iterator(lua_State *L)
 	return 2;
 }
 
-#define SNAPSHOT_T MEMREADER_METATABLE(snapshot)
 static int memreader_snapshot_gc(lua_State *L)
 {
 	HANDLE handle = *(HANDLE*)lua_touserdata(L, 1);
