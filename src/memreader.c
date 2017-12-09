@@ -93,11 +93,11 @@ static int memreader_find_window(lua_State *L)
 }
 
 static const luaL_Reg memreader_funcs[] = {
-	{ "open_process", memreader_open_process },
-	{ "debug_privilege", memreader_debug_privilege },
-	{ "process_name", memreader_process_name },
-	{ "process_ids", memreader_process_ids },
-	{ "find_window", memreader_find_window },
+	{ "openprocess", memreader_open_process },
+	{ "debugprivilege", memreader_debug_privilege },
+	{ "processname", memreader_process_name },
+	{ "processids", memreader_process_ids },
+	{ "findwindow", memreader_find_window },
 	{ NULL, NULL }
 };
 

@@ -169,9 +169,9 @@ static const luaL_reg process_meta[] = {
 static const luaL_reg process_methods[] = {
 	{ "version", process_version },
 	{ "read", process_read },
-	{ "read_relative", process_read_relative },
+	{ "readrelative", process_read_relative },
 	{ "modules", process_modules },
-	{ "exit_code", process_exit_code },
+	{ "exitcode", process_exit_code },
 	{ NULL, NULL }
 };
 static udata_field_info process_getters[] = {
