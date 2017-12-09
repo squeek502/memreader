@@ -184,4 +184,7 @@ static udata_field_info process_setters[] = {
 	{ NULL, NULL }
 };
 
-UDATA_REGISTER_TYPE_WITH_FIELDS_FN(process, PROCESS_T)
+int register_process(lua_State *L)
+{
+	UDATA_REGISTER_TYPE_WITH_FIELDS(process, PROCESS_T)
+}

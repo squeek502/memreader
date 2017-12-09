@@ -34,4 +34,7 @@ static udata_field_info module_setters[] = {
 	{ NULL, NULL }
 };
 
-UDATA_REGISTER_TYPE_WITH_FIELDS_FN(module, MODULE_T)
+int register_module(lua_State *L)
+{
+	UDATA_REGISTER_TYPE_WITH_FIELDS(module, MODULE_T)
+}

@@ -41,10 +41,8 @@ luaL_reg <name>_meta[]					// contains metamethods
 udata_field_info <name>_getters[]		// contains field getters
 udata_field_info <name>_setters[]		// contains field setters
 */
-#define UDATA_REGISTER_TYPE_WITH_FIELDS_FN(name, mt)					\
+#define UDATA_REGISTER_TYPE_WITH_FIELDS(name, mt)						\
 																		\
-int register_##name(lua_State *L)										\
-{																		\
 	/* store methods in a table outside the metatable */				\
 	luaL_newlib(L, name##_methods);										\
 	int methods = lua_gettop(L);										\
@@ -79,7 +77,6 @@ int register_##name(lua_State *L)										\
 						udata_field_newindex_handler(setters) */		\
 																		\
 	lua_pop(L, 2); /* pop metatable and methods table */				\
-	return 0;															\
-}
+	return 0;
 
 #endif
