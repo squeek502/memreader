@@ -8,7 +8,6 @@
 typedef struct {
 	HWND handle;
 	DWORD processId;
-	TCHAR fileName[MAX_PATH];
 	TCHAR title[512];
 } window_t;
 

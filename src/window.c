@@ -12,7 +12,6 @@ void init_window(window_t * window, HWND handle, const TCHAR* title)
 {
 	window->handle = handle;
 	GetWindowThreadProcessId(handle, &window->processId);
-	GetWindowModuleFileName(handle, window->fileName, sizeof(window->fileName) / sizeof(TCHAR));
 	if (!title)
 		GetWindowText(handle, window->title, sizeof(window->title) / sizeof(TCHAR));
 	else
@@ -26,7 +25,6 @@ static const luaL_reg window_methods[] = {
 	{ NULL, NULL }
 };
 static udata_field_info window_getters[] = {
-	{ "filename", udata_field_get_string, offsetof(window_t, fileName) },
 	{ "title", udata_field_get_string, offsetof(window_t, title) },
 	{ "pid", udata_field_get_int, offsetof(window_t, processId) },
 	{ NULL, NULL }
