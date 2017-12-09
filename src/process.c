@@ -119,25 +119,43 @@ static int process_version(lua_State *L)
 	return 1;
 }
 
+static int process_modules_iterator(lua_State *L)
+{
+	process_t* process = check_process(L, 1);
+	HANDLE handle = *(HANDLE*)lua_touserdata(L, lua_upvalueindex(1));
+	static MODULEENTRY32 me32;
+	me32.dwSize = sizeof(MODULEENTRY32);
+
+	BOOL success;
+	if (lua_isnil(L, 2)) // control variable is nil on first iteration
+		success = Module32First(handle, &me32);
+	else
+		success = Module32Next(handle, &me32);
+
+	if (!success)
+		return 0;
+
+	module_t* module = push_module(L);
+	init_module(module, &me32);
+	return 1;
+}
+
 static int process_modules(lua_State *L)
 {
 	process_t* process = check_process(L, 1);
-	HMODULE modules[MAX_MODULES];
-	DWORD bytesRequired;
+	HANDLE* handlePtr = (HANDLE*)lua_newuserdata(L, sizeof(HANDLE*));
+	luaL_getmetatable(L, SNAPSHOT_T);
+	lua_setmetatable(L, -2);
 
-	if (!EnumProcessModulesEx(process->handle, modules, sizeof(modules), &bytesRequired, LIST_MODULES_ALL))
+	*handlePtr = CreateToolhelp32Snapshot(TH32CS_SNAPMODULE | TH32CS_SNAPMODULE32, process->pid);
+	if (*handlePtr == INVALID_HANDLE_VALUE)
 		return push_last_error(L);
 
-	UINT numModules = bytesRequired / sizeof(HMODULE);
-
-	lua_createtable(L, numModules, 0);
-	for (UINT i = 0; i < numModules; i++)
-	{
-		module_t* module = push_module(L);
-		init_module(module, modules[i], process->handle);
-		lua_rawseti(L, -2, i+1);
-	}
-	return 1;
+	// process_modules_iterator's upvalue is the HANDLE* userdata
+	lua_pushcclosure(L, process_modules_iterator, 1);
+	// push process_t to make it the invariant state
+	lua_pushvalue(L, 1);
+	return 2;
 }
 
 static int process_exit_code(lua_State *L)

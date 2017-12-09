@@ -3,11 +3,12 @@
 
 #include <psapi.h>
 
-void init_module(module_t * module, HMODULE handle, HANDLE process)
+void init_module(module_t * module, MODULEENTRY32 * me32)
 {
-	module->handle = handle;
-	GetModuleBaseName(process, handle, module->name, sizeof(module->name) / sizeof(TCHAR));
-	GetModuleFileNameEx(process, handle, module->path, sizeof(module->path) / sizeof(TCHAR));
+	module->handle = me32->hModule;
+	memcpy_s(module->name, sizeof(module->name), me32->szModule, sizeof(me32->szModule));
+	memcpy_s(module->path, sizeof(module->path), me32->szExePath, sizeof(me32->szExePath));
+	module->size = me32->modBaseSize;
 }
 
 module_t* push_module(lua_State *L)
@@ -28,6 +29,7 @@ static udata_field_info module_getters[] = {
 	{ "name", udata_field_get_string, offsetof(module_t, name) },
 	{ "path", udata_field_get_string, offsetof(module_t, path) },
 	{ "base", udata_field_get_memaddress, offsetof(module_t, handle) },
+	{ "size", udata_field_get_int, offsetof(module_t, size) },
 	{ NULL, NULL }
 };
 static udata_field_info module_setters[] = {
