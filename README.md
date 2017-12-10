@@ -1,5 +1,7 @@
 # memreader
 
+[![Build status](https://ci.appveyor.com/api/projects/status/2wvir44l54xuuoau?svg=true)](https://ci.appveyor.com/project/squeek502/memreader)
+
 `memreader` is a [Lua](https://www.lua.org/) module for reading the memory of Windows processes.
 
 ```lua
