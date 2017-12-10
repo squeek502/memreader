@@ -84,7 +84,7 @@ static int memreader_processes(lua_State *L)
 
 static int memreader_open_process(lua_State *L)
 {
-	DWORD processId = luaL_checkint(L, 1);
+	DWORD processId = (int)luaL_checkinteger(L, 1);
 
 	if (processId <= 0)
 		return push_error(L, "invalid process id");

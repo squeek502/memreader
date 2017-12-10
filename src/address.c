@@ -61,7 +61,7 @@ static int memaddress_sub(lua_State *L)
 	return 1;
 }
 
-static const luaL_reg memaddress_meta[] = {
+static const luaL_Reg memaddress_meta[] = {
 	{ "__tostring", memaddress_tostring },
 	{ "__add", memaddress_add },
 	{ "__sub", memaddress_sub },

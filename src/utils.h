@@ -36,8 +36,8 @@ that has fields.
 
 Expects the following to be defined:
 
-luaL_reg <name>_methods[]				// contains member methods
-luaL_reg <name>_meta[]					// contains metamethods
+luaL_Reg <name>_methods[]				// contains member methods
+luaL_Reg <name>_meta[]					// contains metamethods
 udata_field_info <name>_getters[]		// contains field getters
 udata_field_info <name>_setters[]		// contains field setters
 */

@@ -34,7 +34,7 @@ static int process_read(lua_State *L)
 {
 	process_t* process = check_process(L, 1);
 	LPVOID address = (LPVOID)memaddress_checkptr(L, 2);
-	SIZE_T bytes = luaL_checkint(L, 3);
+	SIZE_T bytes = luaL_checkinteger(L, 3);
 
 	char *buff = malloc(bytes);
 	SIZE_T numBytesRead;
@@ -51,7 +51,7 @@ static int process_read_relative(lua_State *L)
 	process_t* process = check_process(L, 1);
 	LPVOID address = process->module;
 	LONG_PTR offset = memaddress_checkptr(L, 2);
-	SIZE_T bytes = luaL_checkint(L, 3);
+	SIZE_T bytes = luaL_checkinteger(L, 3);
 	address = (LPVOID)((char*)address + offset);
 	lua_settop(L, 1); // pop everything but the process_t
 	memaddress_t* absAddress = push_memaddress(L);
@@ -179,11 +179,11 @@ static int process_gc(lua_State *L)
 	return 0;
 }
 
-static const luaL_reg process_meta[] = {
+static const luaL_Reg process_meta[] = {
 	{ "__gc", process_gc },
 	{ NULL, NULL }
 };
-static const luaL_reg process_methods[] = {
+static const luaL_Reg process_methods[] = {
 	{ "version", process_version },
 	{ "read", process_read },
 	{ "readrelative", process_read_relative },

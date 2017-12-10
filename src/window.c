@@ -18,10 +18,10 @@ void init_window(window_t * window, HWND handle, const TCHAR* title)
 		strncpy_s(window->title, sizeof(window->title), title, sizeof(window->title) / sizeof(TCHAR));
 }
 
-static const luaL_reg window_meta[] = {
+static const luaL_Reg window_meta[] = {
 	{ NULL, NULL }
 };
-static const luaL_reg window_methods[] = {
+static const luaL_Reg window_methods[] = {
 	{ NULL, NULL }
 };
 static udata_field_info window_getters[] = {

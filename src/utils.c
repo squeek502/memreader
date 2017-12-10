@@ -37,12 +37,12 @@ const char *get_lua_string(lua_State *L, int index)
 
 int udata_field_get_int(lua_State *L, void *v)
 {
-	lua_pushnumber(L, *(int*)v);
+	lua_pushinteger(L, *(int*)v);
 	return 1;
 }
 int udata_field_set_int(lua_State *L, void *v)
 {
-	*(int*)v = luaL_checkint(L, 3);
+	*(int*)v = (int)luaL_checkinteger(L, 3);
 	return 0;
 }
 

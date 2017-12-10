@@ -19,10 +19,10 @@ module_t* push_module(lua_State *L)
 	return mod;
 }
 
-static const luaL_reg module_meta[] = {
+static const luaL_Reg module_meta[] = {
 	{ NULL, NULL }
 };
-static const luaL_reg module_methods[] = {
+static const luaL_Reg module_methods[] = {
 	{ NULL, NULL }
 };
 static udata_field_info module_getters[] = {
