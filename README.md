@@ -94,6 +94,12 @@ Reads the specified number of bytes starting at the given address (can be either
 #### `process:readrelative(offset, nbytes)`
 Like `process:read()`, except that `offset` is added to the process' main module's base address to determine the address to start from.
 
+```lua
+-- The following are exactly equivalent
+process:read(process.base + 0x40, 4)
+process:readrelative(0x40, 4)
+```
+
 #### `process:modules()`
 Returns an iterator for all the modules of the process, as [`memreader.module`](#memreadermodule) usertypes.
 
