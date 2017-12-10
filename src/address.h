@@ -3,7 +3,7 @@
 
 #include "memreader.h"
 
-#define MEMORY_ADDRESS_T MEMREADER_METATABLE(memaddress)
+#define MEMORY_ADDRESS_T MEMREADER_METATABLE(address)
 
 typedef struct {
 	LPVOID ptr;
