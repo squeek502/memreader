@@ -32,8 +32,8 @@ LONG_PTR memaddress_checkptr(lua_State *L, int index)
 		memaddress_t* addr = check_memaddress(L, index);
 		return (LONG_PTR)(addr->ptr);
 	}
-	luaL_typerror(L, index, "number or " MEMORY_ADDRESS_T);
-	return 0;
+	return luaL_error(L, "attempt to perform arithmetic on %s and %s (expected number or second %s)",
+		MEMORY_ADDRESS_T, luaL_typename(L, 2), MEMORY_ADDRESS_T);
 }
 
 static int memaddress_tostring(lua_State *L)
