@@ -13,8 +13,12 @@
 # define luaL_setfuncs(L,l,n) (assert(n==0), luaL_register(L,NULL,l))
 #endif
 
+#ifndef WINVER
 #define WINVER 0x501
+#endif
+#ifndef _WIN32_WINNT
 #define _WIN32_WINNT 0x501
+#endif
 #define PSAPI_VERSION 1
 #include <windows.h>
 #include <tchar.h>

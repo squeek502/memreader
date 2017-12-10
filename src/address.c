@@ -26,7 +26,7 @@ LONG_PTR memaddress_checkptr(lua_State *L, int index)
 {
 	int t = lua_type(L, index);
 	if (t == LUA_TNUMBER)
-		return lua_tointeger(L, index);
+		return (LONG_PTR)lua_tointeger(L, index);
 	else if (t == LUA_TUSERDATA)
 	{
 		memaddress_t* addr = check_memaddress(L, index);
