@@ -66,14 +66,14 @@ end
 > Relevant WinAPI docs: [`CreateToolhelp32Snapshot`](https://msdn.microsoft.com/en-us/library/windows/desktop/ms682489(v=vs.85).aspx), [`Process32Next`](https://msdn.microsoft.com/en-us/library/windows/desktop/ms684836(v=vs.85).aspx)
 
 ### `memreader.findwindow(title)`
-Finds a window by title. If found, returns a [`memreader.window`](#memreader-window) usertype; otherwise, returns `nil, errmsg`.
+Finds a window by title. If found, returns a [`memreader.window`](#memreaderwindow) usertype; otherwise, returns `nil, errmsg`.
 
 *Note: If there are multiple windows with the same title, this will only return the first (in arbitrary order). `findwindow` is faster than iterating with `processes`, but is not as precise or thorough.*
 
 > Relevant WinAPI docs: [`FindWindow`](https://msdn.microsoft.com/en-us/library/windows/desktop/ms633499(v=vs.85).aspx)
 
 ### `memreader.openprocess(pid)`
-Attempts to open a handle to the process with the given process ID using the flags [`PROCESS_QUERY_LIMITED_INFORMATION | PROCESS_VM_READ`](https://msdn.microsoft.com/en-us/library/windows/desktop/ms684880(v=vs.85).aspx). On success, returns a [`memreader.process`](#memreader-process) usertype; otherwise, returns `nil, errmsg`.
+Attempts to open a handle to the process with the given process ID using the flags [`PROCESS_QUERY_LIMITED_INFORMATION | PROCESS_VM_READ`](https://msdn.microsoft.com/en-us/library/windows/desktop/ms684880(v=vs.85).aspx). On success, returns a [`memreader.process`](#memreaderprocess) usertype; otherwise, returns `nil, errmsg`.
 
 > Relevant WinAPI docs: [`OpenProcess`](https://msdn.microsoft.com/en-us/library/windows/desktop/ms684320(v=vs.85).aspx)
 
@@ -86,16 +86,16 @@ A usertype for process handles.
 - `process.pid`: The process ID (e.g. `280`)
 - `process.name`: The name of the process' main module (e.g. `lua.exe`)
 - `process.path`: The full path to the process' main module (e.g. `C:\lua.exe`)
-- `process.base`: The base address of the process' main module, as a [`memreader.address`](#memreader-address) usertype (e.g. `0000000076EA0000`)
+- `process.base`: The base address of the process' main module, as a [`memreader.address`](#memreaderaddress) usertype (e.g. `0000000076EA0000`)
 
 #### `process:read(address, nbytes)`
-Reads the specified number of bytes starting at the given address (can be either a number or a [`memreader.address`](#memreader-address)) and returns that memory as a string (not null-terminated). On failure, returns `nil, errmsg`.
+Reads the specified number of bytes starting at the given address (can be either a number or a [`memreader.address`](#memreaderaddress)) and returns that memory as a string (not null-terminated). On failure, returns `nil, errmsg`.
 
 #### `process:readrelative(offset, nbytes)`
 Like `process:read()`, except that `offset` is added to the process' main module's base address to determine the address to start from.
 
 #### `process:modules()`
-Returns an iterator for all the modules of the process, as [`memreader.module`](#memreader-module) usertypes.
+Returns an iterator for all the modules of the process, as [`memreader.module`](#memreadermodule) usertypes.
 
 Example:
 ```lua
@@ -126,7 +126,7 @@ A usertype for process modules.
 
 - `module.name`: The name of the module (e.g. `lua51.dll`)
 - `module.path`: The full path to the module (e.g. `C:\lua51.dll`)
-- `module.base`: The base address of the module, as a [`memreader.address`](#memreader-address) usertype (e.g. `0000000076EA0000`)
+- `module.base`: The base address of the module, as a [`memreader.address`](#memreaderaddress) usertype (e.g. `0000000076EA0000`)
 - `module.size`: The size (in bytes) of the module (e.g. `32768`)
 
 ### `memreader.address`
