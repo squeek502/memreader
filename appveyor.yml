@@ -10,19 +10,26 @@ environment:
 
 # Abuse this section so we can have a matrix with different Compiler versions
 configuration:
-  - mingw
   - vs_32
   - vs_64
 
+matrix:
+  fast_finish: true
+
 install:
-  - set PATH=%CD%\env\bin;C:\Python27\Scripts;C:\MinGW\bin;%PATH%
+  - set PATH=%CD%\env\bin;C:\Python27\Scripts;%PATH%
   - pip install hererocks
   - hererocks env --%LUA% --target %configuration%
 
+init:
+- set arch=
+- if "%configuration%"=="vs_64" ( set arch= Win64)
+- set generator="Visual Studio 14 2015%arch%" )
+
 before_build:
+- cmake -G %generator% .
 
 build_script:
-- cmake .
 - cmake --build . --config Release
 
 before_test:
