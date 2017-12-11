@@ -5,7 +5,7 @@
 #include "window.h"
 
 #include <psapi.h>
-#include <TlHelp32.h>
+#include <tlhelp32.h>
 
 static int memreader_debug_privilege(lua_State *L)
 {

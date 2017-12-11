@@ -2,7 +2,7 @@
 #define MEMREADER_MODULE_H
 
 #include "memreader.h"
-#include <TlHelp32.h>
+#include <tlhelp32.h>
 
 #define MODULE_T MEMREADER_METATABLE(module)
 

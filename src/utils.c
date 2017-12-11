@@ -53,7 +53,7 @@ int udata_field_get_string(lua_State *L, void *v)
 }
 int udata_field_set_string(lua_State *L, void *v)
 {
-	(const char*)v = luaL_checkstring(L, 3);
+	v = (void*)luaL_checkstring(L, 3);
 	return 0;
 }
 
