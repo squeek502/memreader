@@ -3,8 +3,16 @@ project (MemReaderModule C)
 
 # Lua
 find_package (Lua REQUIRED)
-find_library (Psapi psapi Psapi)
-find_library (Version version Version)
+
+if (UNIX OR CMAKE_HOST_UNIX)
+  find_library (Psapi NAMES psapi)
+  find_library (Version NAMES version)
+else()
+  # For some reason find_library isn't working on Windows for Psapi.lib/Version.lib
+  # but just adding the Psapi/Version strings to the link libraries works fine
+  set(Psapi "Psapi")
+  set(Version "Version")
+endif()
 
 # Our Module
 file(GLOB src src/*.h src/*.c src/*.def)
