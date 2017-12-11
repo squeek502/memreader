@@ -4,7 +4,6 @@
 #include <lua.h>
 #include <lualib.h>
 #include <lauxlib.h>
-#define LUA_LIB
 
 #if LUA_VERSION_NUM < 502
 #ifndef luaL_newlib
