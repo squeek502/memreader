@@ -3,8 +3,8 @@ project (MemReaderModule C)
 
 # Lua
 find_package (Lua REQUIRED)
-find_library (Psapi psapi)
-find_library (Version version)
+find_library (Psapi psapi Psapi)
+find_library (Version version Version)
 
 # Our Module
 file(GLOB src src/*.h src/*.c src/*.def)
