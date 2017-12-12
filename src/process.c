@@ -147,7 +147,15 @@ static int process_modules(lua_State *L)
 	luaL_getmetatable(L, SNAPSHOT_T);
 	lua_setmetatable(L, -2);
 
-	*handlePtr = CreateToolhelp32Snapshot(TH32CS_SNAPMODULE | TH32CS_SNAPMODULE32, process->pid);
+	// From the WinAPI docs:
+	// "If the function fails with ERROR_BAD_LENGTH when called with TH32CS_SNAPMODULE or TH32CS_SNAPMODULE32, 
+	// call the function again until it succeeds."
+	do
+	{
+		*handlePtr = CreateToolhelp32Snapshot(TH32CS_SNAPMODULE | TH32CS_SNAPMODULE32, process->pid);
+	}
+	while (*handlePtr == INVALID_HANDLE_VALUE && GetLastError() == ERROR_BAD_LENGTH);
+
 	if (*handlePtr == INVALID_HANDLE_VALUE)
 		return push_last_error(L);
 
