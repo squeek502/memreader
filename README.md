@@ -23,6 +23,12 @@ assert(#data_rel == 8 and #data_abs == 8)
 assert(data_rel == data_abs)
 ```
 
+## Installation
+With [Luarocks](https://luarocks.org):
+```
+luarocks install memreader
+```
+
 ## Building
 To build memreader, you'll need to install [`cmake`](https://cmake.org), some version of [Visual Studio](https://www.visualstudio.com/), and have a Lua `.lib` file that [can be found by `cmake`](https://cmake.org/cmake/help/v3.0/module/FindLua.html) (preferably built with the same compiler you're using to build memreader).
 
